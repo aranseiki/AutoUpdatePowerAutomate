@@ -1,4 +1,4 @@
-function DownloadExecutableFile {
+function Save-ExecutableFile {
     param (
         [string] $URL,
         [string] $FilePath
@@ -34,7 +34,7 @@ function Test-URLAccessibility {
     }
 }
 
-function Ensure-ParentDirectoryExists {
+function New-ParentDirectory {
     param (
         [string] $Path,
         [string] $ItemType
@@ -64,7 +64,7 @@ function Get-FileSizeFromUrl {
     return $FileSizeInBytes 
 }
 
-Export-ModuleMember -Function DownloadExecutableFile, `
-    Test-URLAccessibility, `
-    Ensure-ParentDirectoryExists, `
-    Get-FileSizeFromUrl
+Export-ModuleMember -Function Get-FileSizeFromUrl, `
+    New-ParentDirectory, `
+    Save-ExecutableFile, `
+    Test-URLAccessibility

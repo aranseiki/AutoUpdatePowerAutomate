@@ -1,4 +1,4 @@
-Function Validate-Params {
+Function Confirm-Parameter {
     Param(
         [string] $ParamValue,
         [string] $ParamName
@@ -7,3 +7,5 @@ Function Validate-Params {
         Throw "$ParamName parameter is empty."
     }
 }
+
+Export-ModuleMember -Function Confirm-Parameter

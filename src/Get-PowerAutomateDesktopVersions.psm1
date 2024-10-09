@@ -114,5 +114,4 @@ function Get-PowerAutomateDesktopVersions {
     return $OrderedVersionList
 }
 
-# Example function call
-Get-PowerAutomateDesktopVersions -MinVersion 2.47 -MaxVersion 2.48.152 -Descending
+Export-ModuleMember -Function Get-PowerAutomateDesktopVersions

@@ -22,3 +22,5 @@ Function Get-PowerAutomateLocale {
     }
     Return $PowerAutomatePath
 }
+
+Export-ModuleMember -Function Get-PowerAutomateLocale

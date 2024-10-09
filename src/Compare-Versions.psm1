@@ -12,3 +12,5 @@
 
     return ($CurrentVersionWithoutBuild, $InstallFileVersionWithoutBuild)
 }
+
+Export-ModuleMember -Function Compare-Versions
