@@ -1,8 +1,8 @@
 ﻿Import-Module "$PSScriptRoot/src/Compare-Versions.psm1"
-Import-Module "$PSScriptRoot/src/Download-PowerAutomateFile.psm1"
+Import-Module "$PSScriptRoot/src/Download-PowerAutomateInstallFile.psm1"
 Import-Module "$PSScriptRoot/src/Get-PowerAutomateDesktopVersions.psm1"
 Import-Module "$PSScriptRoot/src/Get-PowerAutomateLocale.psm1"
-Import-Module "$PSScriptRoot/src/Validate-Params.psm1"
+Import-Module "$PSScriptRoot/src/Confirm-Parameter.psm1"
 
 
 # --------------------------------------------------------------------------------------------------------
@@ -20,6 +20,7 @@ $PowerAutomateInstallFileName = 'Setup.Microsoft.PowerAutomate.exe'
 # ----------------------------------------------------------------------------------------------------------
 
 $PowerAutomateDownloadFile = 'https://go.microsoft.com/fwlink/?linkid=2102613'
+$URLBase = 'https://download.microsoft.com/download/3/4/8/34844e6f-7bdd-4734-8b60-6b4d0e92f051/Setup.Microsoft.PowerAutomate_VERSIONNUMBER.exe'
 
 # ----------------------------------------------------------------------------------------------------------
 # -------------------------------- INSTALLED APPLICATION DETAILS VALIDATION --------------------------------
@@ -27,20 +28,63 @@ $PowerAutomateDownloadFile = 'https://go.microsoft.com/fwlink/?linkid=2102613'
 
 Clear-Host
 
-Validate-Params -ParamValue $Task -ParamName 'Task'
-Validate-Params -ParamValue $AppStyle -ParamName 'AppStyle'
-Validate-Params -ParamValue $Arch -ParamName 'Arch'
-Validate-Params -ParamValue $UserDownloadPath -ParamName 'UserDownloadPath'
+Confirm-Parameter -ParamValue $Task -ParamName 'Task'
+Confirm-Parameter -ParamValue $AppStyle -ParamName 'AppStyle'
+Confirm-Parameter -ParamValue $Arch -ParamName 'Arch'
+Confirm-Parameter -ParamValue $UserDownloadPath -ParamName 'UserDownloadPath'
 
 Write-Host "INSTALLED APPLICATION DETAILS VALIDATION" `n
+<#
+$PowerAutomateInstallFile = Download-PowerAutomateFile `
+    -UserDownloadPath $UserDownloadPath `
+    -PowerAutomateInstallFileName $PowerAutomateInstallFileName `
+    -PowerAutomateDownloadFile $PowerAutomateDownloadFile
+''
+#>
 
+$VersionList = Get-PowerAutomateDesktopVersions -Descending
+$DownloadPath = "$($PSScriptRoot)/bin"
+
+# <#
+$FileNumber = 1
+$VersionListNumber = $VersionList.Count
+foreach ($Version in $VersionList) {
+    Write-Host `n
+
+    Write-Host "Verifying verion $FileNumber from $VersionListNumber."
+    $FileNumber = $FileNumber + 1
+
+    $CurrentVersion = $Version.ToString()
+    $URL = $URLBase -Replace 'VERSIONNUMBER', $CurrentVersion
+    Write-Host $URL
+
+    $TestResult = Test-URLAccessibility -URL $URL
+
+    if (-not $TestResult) {
+        continue
+    }
+    
+    $FileName = $($url -Split '/')[-1]
+    $ExecutableFilePath = "$DownloadPath/$FileName"
+    New-ParentDirectory -Path $ExecutableFilePath -ItemType 'Directory'
+
+    $FileSizeInBytes = Get-FileSizeFromUrl $URL 
+    Write-Host "File size: $FileSizeInBytes bytes"
+    
+    $DownloadResult = DownloadExecutableFile -URL $URL -FilePath $ExecutableFilePath
+    if ($DownloadResult) {
+        break
+    }
+}
+
+if (-not $DownloadResult) {
+    Write-Error "No executable is present for download."
+}
+#>
+
+<#
 If ($Task.ToUpper() -eq 'INSTALL') {
     Write-Host "ACTION: INSTALL" `n
-
-    $PowerAutomateInstallFile = Download-PowerAutomateFile `
-        -UserDownloadPath $UserDownloadPath `
-        -PowerAutomateInstallFileName $PowerAutomateInstallFileName `
-        -PowerAutomateDownloadFile $PowerAutomateDownloadFile
 
     $PowerAutomateHostFile = (
         Get-ChildItem -Path $PowerAutomatePath -Filter '*RPA.UpdateService.exe'
@@ -52,21 +96,16 @@ If ($Task.ToUpper() -eq 'INSTALL') {
 } ElseIf ($Task.ToUpper() -eq 'UPDATE') {
     Write-Host "ACTION: UPDATE" `n
 
-    $PowerAutomateInstallFile = Download-PowerAutomateFile `
-        -UserDownloadPath $UserDownloadPath `
-        -PowerAutomateInstallFileName $PowerAutomateInstallFileName `
-        -PowerAutomateDownloadFile $PowerAutomateDownloadFile
-
     $PowerAutomatePath = Get-PowerAutomateLocale `
         -AppStyle $AppStyle.ToUpper() `
         -Arch $Arch.ToUpper()
     
-    Validate-Params -ParamValue $PowerAutomatePath -ParamName 'PowerAutomatePath'
+    Confirm-Parameter -ParamValue $PowerAutomatePath -ParamName 'PowerAutomatePath'
 
     $PowerAutomateHostFile = (
         Get-ChildItem -Path $PowerAutomatePath -Filter '*RPA.UpdateService.exe'
     ).FullName
-    Validate-Params -ParamValue $PowerAutomateHostFile -ParamName 'PowerAutomateHostFile'
+    Confirm-Parameter -ParamValue $PowerAutomateHostFile -ParamName 'PowerAutomateHostFile'
 
     $PowerAutomateCurrentVersion = $(
         Get-Item $PowerAutomateHostFile
@@ -88,11 +127,6 @@ If ($Task.ToUpper() -eq 'INSTALL') {
     }
 } ElseIf ($Task.ToUpper() -eq 'UNINSTALL') {
     Write-Host "ACTION: UNINSTALL" `n
-
-    $PowerAutomateInstallFile = Download-PowerAutomateFile `
-        -UserDownloadPath $UserDownloadPath `
-        -PowerAutomateInstallFileName $PowerAutomateInstallFileName `
-        -PowerAutomateDownloadFile $PowerAutomateDownloadFile
 } Else {
     Throw "Task parameter value not defined."
 }
@@ -121,3 +155,4 @@ If ($Task.ToUpper() -eq 'INSTALL' -or $Task.ToUpper() -eq 'UPDATE') {
     Write-Host "ACTION: UNINSTALL" `n
     . $PowerAutomateInstallFile -Silent -Uninstall
 }
+#>
