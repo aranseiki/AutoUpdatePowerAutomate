@@ -1,11 +1,20 @@
 function Save-ExecutableFile {
     param (
         [string] $URL,
-        [string] $FilePath
+        [string] $FilePath,
+        [bool] $VerifyFileFirst = $true
     )
 
     try {
-        $Response = Invoke-WebRequest -Uri $URL -UseBasicParsing -OutFile $FilePath
+        if ($VerifyFileFirst) {
+            $TestPathResult = Test-Path -Path $FilePath
+            if ($TestPathResult) {
+                Write-Host "File already exists at: $FilePath. Skipping download."
+                return $true
+            }
+        }
+
+        Invoke-WebRequest -Uri $URL -UseBasicParsing -OutFile $FilePath | Out-Null
         Write-Host "Download completed: $FilePath"
         return $true
     } catch {
